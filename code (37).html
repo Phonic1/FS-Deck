@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Speed Sound Deck</title>
+    <style>
+        body {
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            margin: 0;
+            background-color: #ffffff;
+            height: 100vh;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+
+        .watermark {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: #6b7280;
+            opacity: 0.7;
+            font-family: 'Sassoon Primary', 'Comic Sans MS', Arial, sans-serif;
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        /* Speed Sound Deck Styles */
+        .speed-sound-deck {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .flashcard-container {
+            width: 100%;
+            height: 70%; 
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+
+        .flashcard {
+            width: 80vw; 
+            height: 100vw; 
+            max-width: 800px; 
+            max-height: 1000px; 
+            position: absolute;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background-color: #ffffff;
+            border: 1px solid #d2d2d7;
+            border-radius: 12px;
+            color: #1d1d1f;
+            text-align: center;
+            padding: 20px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            user-select: none;
+            touch-action: none;
+            z-index: 1;
+            opacity: 1;
+        }
+
+        .flashcard.active {
+            z-index: 2;
+        }
+
+        .flashcard.fade-out {
+            animation: fadeOut 0.3s forwards;
+        }
+
+        .flashcard.fade-in {
+            animation: fadeIn 0.3s forwards;
+        }
+
+        @keyframes fadeOut {
+            0% { opacity: 1; }
+            100% { opacity: 0; }
+        }
+
+        @keyframes fadeIn {
+            0% { opacity: 0; }
+            100% { opacity: 1; }
+        }
+
+        .set-title {
+            font-size: 48px; 
+            font-weight: bold;
+            color: #007aff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+        }
+
+        .sound-text {
+            font-size: 288px; 
+            font-weight: 500;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            line-height: 1;
+        }
+        
+        .controls-group {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 3;
+        }
+
+        .set-controls { left: 10px; top: 10px; }
+        .student-controls { right: 10px; top: 10px; align-items: flex-end; }
+        #studentNameInput { padding: 8px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; font-size: 14px; width: 150px; }
+        .nav-controls { left: 10px; bottom: 60px; }
+        .reset-control { left: 10px; bottom: 10px; }
+        .marking-controls { right: 10px; bottom: 10px; align-items: flex-end; }
+
+        .ssd-button {
+            cursor: pointer; border: none; border-radius: 8px; font-family: inherit; font-weight: 500;
+            display: flex; justify-content: center; align-items: center;
+            transition: background-color 0.3s, transform 0.1s;
+            padding: 5px; box-sizing: border-box;
+        }
+        .ssd-button:disabled { background-color: #d2d2d7 !important; color: #8e8e93 !important; cursor: not-allowed; transform: none; }
+        .ssd-button:hover:not(:disabled) { transform: translateY(-1px); }
+
+        .set-controls .ssd-button, .student-controls .ssd-button {
+            width: auto; min-width: 60px; padding-left: 10px; padding-right: 10px;
+            height: 40px; font-size: 14px;
+        }
+        #set1Btn, #set2Btn, #set3Btn {
+            background-color: #34c759; color: white;
+            width: 60px; height: 40px; font-size: 16px;
+        }
+        .student-controls .ssd-button { font-size: 14px; }
+
+        #prevBtn { background-color: #ff9500; color: white; width: 50px; height: 50px; font-size: 24px; }
+        #nextBtn { background-color: #007aff; color: white; width: 50px; height: 50px; font-size: 24px; }
+        
+        #resetBtn { 
+            background-color: #af52de; color: white; 
+            width: auto; min-width: 60px; padding-left: 10px; padding-right:10px; 
+            height: 40px; font-size: 14px;
+        }
+        #homeBtnSSD { background-color: #ff3b30; color:white;} 
+        
+        .marking-controls .ssd-button {
+            width: auto; min-width: 100px; padding-left: 10px; padding-right: 10px;
+            height: 45px; font-size: 14px;
+        }
+        #gotItBtn { background-color: #34c759; color: white; }
+        #notYetBtn { background-color: #ff3b30; color: white; }
+        
+        .modal {
+            display: none; position: fixed; z-index: 1001; left: 0; top: 0; width: 100%; height: 100%;
+            overflow: auto; background-color: rgba(0,0,0,0.6);
+        }
+        .modal-content {
+            background-color: #fefefe; margin: 10% auto; padding: 20px; border: 1px solid #888;
+            width: 90%; max-width: 700px; border-radius: 10px; position: relative;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        .close-button { color: #aaa; float: right; font-size: 28px; font-weight: bold; line-height: 1; cursor: pointer; }
+        .close-button:hover, .close-button:focus { color: black; text-decoration: none; }
+        #reportTableContainer { margin-top: 15px; max-height: 40vh; overflow-y: auto; }
+        #reportTableContainer table { width: 100%; border-collapse: collapse; }
+        #reportTableContainer th, #reportTableContainer td { border: 1px solid #ddd; padding: 8px; text-align: center; font-size: 16px; }
+        #reportTableContainer th { background-color: #f2f2f2; font-weight: bold; }
+        #reportModal h3 { margin-top: 0;}
+        #downloadReportBtnModal { 
+            background-color: #007aff; color: white;
+            padding: 10px 15px; font-size: 14px; margin-top: 20px;
+            width: auto; height: auto; /* Override .ssd-button fixed if any */
+        }
+        .status-correct { color: #28a745; font-weight: bold; } /* Green for correct */
+        .status-incorrect { color: #dc3545; font-weight: bold; } /* Red for incorrect */
+        #reportPercentageSection { margin-top: 10px; font-size: 1.1em; }
+
+
+        @media (max-width: 768px) {
+            .flashcard-container { height: 60%; } 
+            .sound-text { font-size: 192px; } 
+            .set-title { font-size: 36px; } 
+            #prevBtn, #nextBtn { width: 40px; height: 40px; font-size: 20px; }
+            .set-controls .ssd-button, .student-controls .ssd-button { min-width: 50px; height: 35px; font-size: 12px; }
+            #set1Btn, #set2Btn, #set3Btn { width: 50px; height: 30px; font-size: 14px; }
+            #studentNameInput { font-size: 12px; width: 120px; padding: 6px;}
+            #resetBtn { min-width: 50px; height: 30px; font-size: 12px; }
+            .marking-controls .ssd-button { min-width: 80px; height: 40px; font-size: 12px; }
+            #reportModal .modal-content { width: 95%; margin: 5% auto;}
+            #reportTableContainer th, #reportTableContainer td { font-size: 14px; padding: 6px;}
+        }
+
+        @media (max-width: 480px) {
+            .flashcard-container { height: 50%; } 
+            .sound-text { font-size: 144px; } 
+            .set-title { font-size: 24px; } 
+            .controls-group { gap: 5px; }
+            #prevBtn, #nextBtn { width: 35px; height: 35px; font-size: 18px; }
+            .set-controls .ssd-button, .student-controls .ssd-button { min-width: 45px; height: 30px; font-size: 10px; }
+            #set1Btn, #set2Btn, #set3Btn { width: 45px; height: 25px; font-size: 12px; }
+            #studentNameInput { font-size: 10px; width: 100px; padding: 5px;}
+            #resetBtn { min-width: 45px; height: 25px; font-size: 10px; }
+            .marking-controls .ssd-button { min-width: 70px; height: 35px; font-size: 10px; }
+            #reportModal h3 { font-size: 18px; }
+            #reportTableContainer th, #reportTableContainer td { font-size: 12px; padding: 4px;}
+            #downloadReportBtnModal { font-size: 12px; padding: 8px 12px;}
+        }
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <div id="speedSoundDeck" class="speed-sound-deck">
+        <div class="flashcard-container" id="flashcardContainer">
+            <div class="flashcard active" id="currentCard"></div>
+        </div>
+
+        <div class="controls-group set-controls">
+            <button id="set1Btn" class="ssd-button">Set 1</button>
+            <button id="set2Btn" class="ssd-button">Set 2</button>
+            <button id="set3Btn" class="ssd-button">Set 3</button>
+            <button id="homeBtnSSD" class="ssd-button">Reset Deck</button>
+            <button id="viewReportBtn" class="ssd-button" style="background-color: #ffcc00; color: #333;">View Report</button>
+        </div>
+
+        <div class="controls-group student-controls">
+            <input type="text" id="studentNameInput" placeholder="Student Name">
+            <button id="startSessionBtn" class="ssd-button" style="background-color: #5ac8fa; color:white;">Start Session</button>
+        </div>
+        
+        <div class="controls-group nav-controls">
+            <button id="prevBtn" class="ssd-button">←</button>
+            <button id="nextBtn" class="ssd-button">→</button>
+        </div>
+
+        <div class="controls-group reset-control">
+             <button id="resetBtn" class="ssd-button">Reset Card</button>
+        </div>
+        
+        <div class="controls-group marking-controls">
+            <button id="gotItBtn" class="ssd-button mark-btn">✔️ Got it</button>
+            <button id="notYetBtn" class="ssd-button mark-btn">❌ Not yet</button>
+        </div>
+    </div>
+
+    <div id="reportModal" class="modal">
+        <div class="modal-content">
+            <span class="close-button" id="closeReportBtn">&times;</span>
+            <h3 id="reportTitle">Student Report</h3>
+            <p>Student: <strong id="reportStudentName"></strong></p>
+            <div id="reportPercentageSection">
+                Percentage Acquired: <strong id="reportPercentage">N/A</strong>
+            </div>
+            <div id="reportTableContainer"></div>
+            <button id="downloadReportBtnModal" class="ssd-button">Download CSV</button>
+        </div>
+    </div>
+
+    <div class="watermark">Scott Clee dev ©</div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+
+    <script>
+        // START OF FIREBASE INITIALIZATION
+        const firebaseConfig = {
+            apiKey: "AIzaSyDwNqSt2UD1r0EO2CytEtqOmDiBxNIJM", 
+            authDomain: "m5-literacy-db.firebaseapp.com",   
+            projectId: "m5-literacy-db",                   
+            storageBucket: "m5-literacy-db.appspot.com", 
+            messagingSenderId: "389680220222",             
+            appId: "1:389680220222:web:623db2ed40f30a5ad3696f", 
+            measurementId: "G-PMLHCJ18F0"                 
+        };
+        if (!firebase.apps.length) { 
+            firebase.initializeApp(firebaseConfig);
+        }
+        const db = firebase.firestore(); 
+        const speedSoundsReportsCollectionRef = db.collection("speedSoundsReports");
+        // END OF FIREBASE INITIALIZATION
+
+
+        const sets = [
+            { name: "Set 1", sounds: ["a", "e", "i", "o", "u", "m", "s", "d", "t", "n", "p", "g", "c", "k", "b", "f", "l", "h", "r", "j", "v", "y", "w", "z", "x", "sh", "th", "ch", "qu", "ng", "nk"] },
+            { name: "Set 2", sounds: ["ay", "ee", "igh", "ow", "oo", "oo", "ar", "or", "air", "ir", "ou", "oy"] },
+            { name: "Set 3", sounds: ["ea", "oi", "a-e", "i-e", "o-e", "u-e", "aw", "are", "ur", "er", "ow", "ai", "oa", "ew", "ire", "ear", "ure", "tion", "tious/cious"] }
+        ];
+        let currentSetIndex = 0;
+        let currentSoundIndex = 0;
+        let showingSetTitle = true;
+        let cardHistory = [];
+        let isTransitioning = false;
+        let ssdInitialized = false;
+
+        let currentStudentName = "";
+        let studentSessionData = {}; 
+        let isSessionActive = false;
+        let currentSessionId = null; 
+
+        let studentNameInput, startSessionBtn, gotItBtn, notYetBtn, viewReportBtn, reportModal, closeReportBtn, reportStudentNameEl, reportTableContainerEl, downloadReportBtnModalEl, homeBtnSSDElement, prevBtnElement, nextBtnElement, resetBtnElement, set1BtnElement, set2BtnElement, set3BtnElement, currentCardElement, reportPercentageEl;
+
+
+        function initializeSpeedSoundDeck() {
+            if (ssdInitialized) {
+                 updateCard();
+                 return;
+            }
+            
+            studentNameInput = document.getElementById('studentNameInput');
+            startSessionBtn = document.getElementById('startSessionBtn');
+            gotItBtn = document.getElementById('gotItBtn');
+            notYetBtn = document.getElementById('notYetBtn');
+            viewReportBtn = document.getElementById('viewReportBtn');
+            reportModal = document.getElementById('reportModal');
+            closeReportBtn = document.getElementById('closeReportBtn');
+            reportStudentNameEl = document.getElementById('reportStudentName');
+            reportTableContainerEl = document.getElementById('reportTableContainer');
+            downloadReportBtnModalEl = document.getElementById('downloadReportBtnModal');
+            homeBtnSSDElement = document.getElementById('homeBtnSSD'); 
+            prevBtnElement = document.getElementById('prevBtn');
+            nextBtnElement = document.getElementById('nextBtn');
+            resetBtnElement = document.getElementById('resetBtn');
+            set1BtnElement = document.getElementById('set1Btn');
+            set2BtnElement = document.getElementById('set2Btn');
+            set3BtnElement = document.getElementById('set3Btn');
+            reportPercentageEl = document.getElementById('reportPercentage');
+
+
+            cardHistory = [{ setIndex: 0, soundIndex: 0, isSetTitle: true }];
+            updateCard(); 
+
+            const addSafeEventListener = (element, event, handler) => {
+                if (element) {
+                    if (event === 'click') {
+                        element.addEventListener(event, handler);
+                    } else if (event === 'touchstart') {
+                         element.addEventListener(event, (e) => {e.preventDefault(); handler(e);}, { passive: false });
+                    }
+                } else {
+                    console.warn(`Element for listener (${event}) not found initially.`);
+                }
+            };
+            
+            addSafeEventListener(prevBtnElement, 'click', prevCard);
+            addSafeEventListener(prevBtnElement, 'touchstart', prevCard);
+            addSafeEventListener(nextBtnElement, 'click', nextCard);
+            addSafeEventListener(nextBtnElement, 'touchstart', nextCard);
+            addSafeEventListener(resetBtnElement, 'click', resetCurrentCardView);
+            addSafeEventListener(resetBtnElement, 'touchstart', resetCurrentCardView);
+            addSafeEventListener(set1BtnElement, 'click', () => goToSet(0));
+            addSafeEventListener(set1BtnElement, 'touchstart', () => goToSet(0));
+            addSafeEventListener(set2BtnElement, 'click', () => goToSet(1));
+            addSafeEventListener(set2BtnElement, 'touchstart', () => goToSet(1));
+            addSafeEventListener(set3BtnElement, 'click', () => goToSet(2));
+            addSafeEventListener(set3BtnElement, 'touchstart', () => goToSet(2));
+            addSafeEventListener(homeBtnSSDElement, 'click', resetDeckToStart);
+            addSafeEventListener(homeBtnSSDElement, 'touchstart', resetDeckToStart);
+            addSafeEventListener(startSessionBtn, 'click', startSession);
+            addSafeEventListener(startSessionBtn, 'touchstart', startSession);
+            addSafeEventListener(gotItBtn, 'click', () => handleMarking(1));
+            addSafeEventListener(gotItBtn, 'touchstart', () => handleMarking(1));
+            addSafeEventListener(notYetBtn, 'click', () => handleMarking(0));
+            addSafeEventListener(notYetBtn, 'touchstart', () => handleMarking(0));
+            addSafeEventListener(viewReportBtn, 'click', displayReport);
+            addSafeEventListener(viewReportBtn, 'touchstart', displayReport);
+            addSafeEventListener(closeReportBtn, 'click', () => reportModal.style.display = 'none');
+            addSafeEventListener(closeReportBtn, 'touchstart', () => reportModal.style.display = 'none'); 
+            addSafeEventListener(downloadReportBtnModalEl, 'click', downloadCSVReport);
+            addSafeEventListener(downloadReportBtnModalEl, 'touchstart', downloadCSVReport); 
+
+            window.addEventListener('click', (event) => { 
+                if (event.target == reportModal) {
+                    reportModal.style.display = "none";
+                }
+            });
+
+            document.addEventListener('keydown', handleSSDKeyPress);
+            updateButtonStates(); 
+            ssdInitialized = true;
+        }
+
+        function handleSSDKeyPress(e) {
+            if (document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.isContentEditable)) {
+                return;
+            }
+            if (reportModal.style.display === 'block') { 
+                 if (e.key === 'Escape') reportModal.style.display = 'none';
+                 return;
+            }
+            if (e.key === 'ArrowLeft') prevCard(e);
+            else if (e.key === 'ArrowRight') nextCard(e);
+        }
+
+        function handleCardClick(e) { e.preventDefault(); nextCard(e); }
+        function handleCardTap(e) {
+            e.preventDefault();
+            const card = document.getElementById('currentCard'); 
+            if (!card) return;
+            const rect = card.getBoundingClientRect();
+            const tapX = e.touches[0].clientX - rect.left;
+            const cardWidth = rect.width > 0 ? rect.width : 1;
+            if (tapX < cardWidth / 2) prevCard(e); else nextCard(e);
+        }
+        
+        function updateButtonStates() {
+            if (!ssdInitialized) return; 
+
+            const hasMarkedData = Object.keys(studentSessionData).length > 0;
+
+            // Student Controls
+            startSessionBtn.disabled = isSessionActive || isTransitioning;
+            studentNameInput.disabled = isSessionActive || isTransitioning; 
+
+            // Marking Controls
+            gotItBtn.disabled = !isSessionActive || showingSetTitle || isTransitioning;
+            notYetBtn.disabled = !isSessionActive || showingSetTitle || isTransitioning;
+
+            // View Report Button (in set-controls group, but its handler doesn't use navigateWithTransition)
+            viewReportBtn.disabled = (!isSessionActive || !hasMarkedData) || isTransitioning; 
+            
+            // Download button in Modal
+            if (downloadReportBtnModalEl) { 
+                downloadReportBtnModalEl.disabled = (!isSessionActive || !hasMarkedData) || isTransitioning;
+            }
+
+            // Nav & Reset Card Buttons (bottom-left)
+            prevBtnElement.disabled = isTransitioning || cardHistory.length <= 1;
+            nextBtnElement.disabled = isTransitioning;
+            resetBtnElement.disabled = isTransitioning;
+
+            // --- MODIFICATION FOR SPECIFIC SET CONTROL BUTTONS ---
+            // Set 1, Set 2, Set 3, and Reset Deck (homeBtnSSD) buttons will not be visually
+            // disabled by `isTransitioning` here because their click handlers 
+            // (`goToSet`, `resetDeckToStart`) call `navigateWithTransition`, which has its 
+            // own internal `if (isTransitioning) return;` guard, preventing multiple clicks.
+            // This stops the visual "blinking" of these specific buttons.
+            // If there were other conditions to disable them (besides transitions), that logic would go here.
+            set1BtnElement.disabled = false; 
+            set2BtnElement.disabled = false; 
+            set3BtnElement.disabled = false; 
+            homeBtnSSDElement.disabled = false; 
+        }
+
+
+        function updateCard() {
+            currentCardElement = document.getElementById('currentCard');
+            if (!currentCardElement) {
+                console.error('Current card element not found during updateCard.');
+                const container = document.getElementById('flashcardContainer');
+                if (container && !container.querySelector('.flashcard')) {
+                     const newCardElement = createNewCard(); 
+                     if (!newCardElement) { updateButtonStates(); return; }
+                } else if (!container) { updateButtonStates(); return;
+                } else { currentCardElement = container.querySelector('#currentCard'); if(!currentCardElement) { updateButtonStates(); return; } }
+            }
+            currentCardElement.innerHTML = '';
+            currentCardElement.removeEventListener('click', handleCardClick);
+            currentCardElement.removeEventListener('touchstart', handleCardTap);
+            if (showingSetTitle) {
+                const titleSpan = document.createElement('span'); titleSpan.className = 'set-title';
+                titleSpan.textContent = sets[currentSetIndex].name; currentCardElement.appendChild(titleSpan);
+            } else {
+                const soundSpan = document.createElement('span'); soundSpan.className = 'sound-text';
+                const sound = sets[currentSetIndex].sounds[currentSoundIndex];
+                soundSpan.textContent = sound; currentCardElement.appendChild(soundSpan);
+            }
+            currentCardElement.addEventListener('click', handleCardClick);
+            currentCardElement.addEventListener('touchstart', handleCardTap, { passive: false });
+            updateButtonStates();
+        }
+
+        function createNewCard() {
+            const container = document.getElementById('flashcardContainer');
+            if (!container) { console.error('Flashcard container not found for createNewCard'); return null; }
+            const existingCard = container.querySelector('#currentCard');
+            if (existingCard) existingCard.remove();
+            const newCard = document.createElement('div');
+            newCard.className = 'flashcard active fade-in'; newCard.id = 'currentCard';
+            container.appendChild(newCard); currentCardElement = newCard; 
+            return newCard;
+        }
+
+        function navigateWithTransition(navigationLogic) {
+            if (isTransitioning) return;
+            isTransitioning = true; updateButtonStates();
+            currentCardElement = document.getElementById('currentCard'); 
+            let cardWasRecreated = false;
+            if (!currentCardElement) {
+                console.warn("Transition: currentCard not found, creating.");
+                const newCreatedCard = createNewCard();
+                if(!newCreatedCard) { isTransitioning = false; updateButtonStates(); return; }
+                cardWasRecreated = true;
+            } else {
+                 currentCardElement.classList.remove('active'); currentCardElement.classList.add('fade-out');
+            }
+            setTimeout(() => {
+                if (!cardWasRecreated && currentCardElement && currentCardElement.classList.contains('fade-out')) currentCardElement.remove();
+                navigationLogic(); 
+                const newCardElement = createNewCard(); 
+                if (newCardElement) updateCard(); 
+                isTransitioning = false; updateButtonStates(); 
+            }, cardWasRecreated ? 0 : 300);
+        }
+
+        function goToSet(setIndex) {
+            navigateWithTransition(() => {
+                currentSetIndex = setIndex; currentSoundIndex = 0; showingSetTitle = true;
+                cardHistory = cardHistory.filter(entry => !(entry.setIndex === currentSetIndex && entry.isSetTitle));
+                cardHistory.push({ setIndex: currentSetIndex, soundIndex: currentSoundIndex, isSetTitle: showingSetTitle });
+            });
+        }
+        function nextCard(e) {
+            if (e) e.preventDefault();
+             navigateWithTransition(() => {
+                if (showingSetTitle) { showingSetTitle = false; currentSoundIndex = 0;
+                } else {
+                    currentSoundIndex++;
+                    if (currentSoundIndex >= sets[currentSetIndex].sounds.length) {
+                        currentSetIndex++;
+                        if (currentSetIndex >= sets.length) currentSetIndex = 0; 
+                        currentSoundIndex = 0; showingSetTitle = true;
+                    }
+                }
+                cardHistory.push({ setIndex: currentSetIndex, soundIndex: currentSoundIndex, isSetTitle: showingSetTitle });
+            });
+        }
+        function prevCard(e) {
+            if (e) e.preventDefault();
+            if (cardHistory.length <= 1 && !isTransitioning) { updateButtonStates(); return; }
+            navigateWithTransition(() => {
+                if (cardHistory.length > 1) { 
+                    cardHistory.pop();
+                    const previousState = cardHistory[cardHistory.length - 1];
+                    currentSetIndex = previousState.setIndex; currentSoundIndex = previousState.soundIndex; showingSetTitle = previousState.isSetTitle;
+                }
+            });
+        }
+        function resetCurrentCardView(e) { 
+            if (e) e.preventDefault();
+            navigateWithTransition(() => {
+                showingSetTitle = true; currentSoundIndex = 0; 
+                while(cardHistory.length > 1 && (!cardHistory[cardHistory.length-1].isSetTitle || cardHistory[cardHistory.length-1].setIndex !== currentSetIndex)) cardHistory.pop();
+                if (cardHistory.length === 0 || !(cardHistory[cardHistory.length-1].setIndex === currentSetIndex && cardHistory[cardHistory.length-1].isSetTitle)) {
+                     cardHistory.push({ setIndex: currentSetIndex, soundIndex: 0, isSetTitle: true });
+                } else { cardHistory[cardHistory.length-1] = { setIndex: currentSetIndex, soundIndex: 0, isSetTitle: true }; }
+            });
+        }
+        function resetDeckToStart(e) {
+            if (e) e.preventDefault();
+             navigateWithTransition(() => {
+                currentSetIndex = 0; currentSoundIndex = 0; showingSetTitle = true;
+                cardHistory = [{ setIndex: 0, soundIndex: 0, isSetTitle: true }];
+                isSessionActive = false; currentStudentName = ""; studentSessionData = {}; currentSessionId = null;
+                if (studentNameInput) studentNameInput.value = "";
+            });
+        }
+
+        function startSession() {
+            const name = studentNameInput.value.trim();
+            if (!name) { alert("Please enter a student's name."); return; }
+            currentStudentName = name; isSessionActive = true; studentSessionData = {}; 
+            currentSessionId = `ssd-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`; 
+            alert(`Session started for ${currentStudentName}. Session ID: ${currentSessionId}`);
+            updateButtonStates();
+        }
+
+        function handleMarking(status) { 
+            if (!isSessionActive || showingSetTitle || isTransitioning) return;
+            const currentSound = sets[currentSetIndex].sounds[currentSoundIndex];
+            studentSessionData[currentSound] = status;
+            nextCard(); 
+        }
+
+        async function displayReport() { 
+            if (!isSessionActive || Object.keys(studentSessionData).length === 0) {
+                alert("No data to report for the current session. Please mark some sounds first.");
+                updateButtonStates(); 
+                return;
+            }
+
+            reportStudentNameEl.textContent = currentStudentName;
+            reportTableContainerEl.innerHTML = ''; 
+
+            const table = document.createElement('table');
+            const headerRow = table.insertRow(); 
+            const marksRow = table.insertRow();  
+
+            let reportedSounds = [];
+            let totalAttempted = 0;
+            let totalCorrect = 0;
+
+            sets.forEach(set => {
+                set.sounds.forEach(sound => {
+                    if (studentSessionData.hasOwnProperty(sound)) {
+                        if (!reportedSounds.find(rs => rs.sound === sound)) {
+                             reportedSounds.push({sound: sound, mark: studentSessionData[sound]});
+                             totalAttempted++;
+                             if (studentSessionData[sound] === 1) {
+                                 totalCorrect++;
+                             }
+                        }
+                    }
+                });
+            });
+            
+            const percentageAcquired = totalAttempted > 0 ? ((totalCorrect / totalAttempted) * 100).toFixed(2) : 0;
+            reportPercentageEl.textContent = `${percentageAcquired}% (${totalCorrect}/${totalAttempted})`;
+
+
+            if (reportedSounds.length === 0) { 
+                 reportTableContainerEl.innerHTML = "<p>No sounds marked yet in this session.</p>";
+                 reportModal.style.display = 'block';
+                 updateButtonStates();
+                 return;
+            }
+
+            reportedSounds.forEach(item => {
+                const th = document.createElement('th');
+                th.textContent = item.sound;
+                headerRow.appendChild(th);
+
+                const td = marksRow.insertCell();
+                if (item.mark === 1) {
+                    td.innerHTML = '✔️'; 
+                    td.className = 'status-correct';
+                } else {
+                    td.innerHTML = '❌'; 
+                    td.className = 'status-incorrect';
+                }
+            });
+
+            reportTableContainerEl.appendChild(table);
+            reportModal.style.display = 'block';
+            updateButtonStates();
+
+            if (currentSessionId) {
+                const reportDataForFirebase = {
+                    studentName: currentStudentName,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    soundsAttempted: studentSessionData, 
+                    percentageAcquired: parseFloat(percentageAcquired),
+                    totalSoundsAttempted: totalAttempted,
+                    totalSoundsCorrect: totalCorrect,
+                    sessionId: currentSessionId 
+                };
+
+                try {
+                    await speedSoundsReportsCollectionRef.doc(currentSessionId).set(reportDataForFirebase);
+                    console.log("Speed Sounds report saved to Firestore with ID:", currentSessionId);
+                } catch (error) {
+                    console.error("Error saving Speed Sounds report to Firestore: ", error);
+                    alert("Error saving report to cloud. Check console.");
+                }
+            } else {
+                console.warn("No currentSessionId, report not saved to Firebase.");
+            }
+        }
+
+        function downloadCSVReport() {
+            if (!isSessionActive || Object.keys(studentSessionData).length === 0) {
+                alert("No data to download."); return;
+            }
+            let csvContent = "data:text/csv;charset=utf-8,";
+            csvContent += `Student Name:,${currentStudentName}\n`;
+            csvContent += `Date:,${new Date().toLocaleDateString()}\n`;
+            let totalCorrect = 0; let totalAttempted = 0;
+            Object.values(studentSessionData).forEach(mark => {
+                totalAttempted++;
+                if (mark === 1) totalCorrect++;
+            });
+            const percentage = totalAttempted > 0 ? ((totalCorrect / totalAttempted) * 100).toFixed(2) : 0;
+            csvContent += `Percentage Acquired:,${percentage}%\n`;
+            csvContent += `Score:,${totalCorrect}/${totalAttempted}\n\n`;
+
+            let soundHeaders = []; let markValues = [];
+            sets.forEach(set => {
+                set.sounds.forEach(sound => {
+                    if (studentSessionData.hasOwnProperty(sound) && !soundHeaders.includes(`"${sound.replace(/"/g, '""')}"`)) {
+                        soundHeaders.push(`"${sound.replace(/"/g, '""')}"`); 
+                        markValues.push(studentSessionData[sound] === 1 ? "1" : "0"); 
+                    }
+                });
+            });
+            csvContent += "Sound:," + soundHeaders.join(",") + "\n";
+            csvContent += "Status (1=Correct; 0=Incorrect):," + markValues.join(",") + "\n";
+
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            const safeStudentName = currentStudentName.replace(/[^a-z0-9]/gi, '_').toLowerCase() || "student";
+            link.setAttribute("download", `${safeStudentName}_speed_sounds_report.csv`);
+            document.body.appendChild(link); link.click(); document.body.removeChild(link);
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeSpeedSoundDeck);
+    </script>
+</body>
+</html>
